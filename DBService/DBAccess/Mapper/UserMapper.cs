@@ -163,13 +163,17 @@ namespace DBAccess.Mapper
                 using (connection)
                 {
                     var query = @"
-                                UPDATE [dbo].[User]
-                                SET
-                                    Surname = @Surname,
-                                    Name = @Name,
-                                    FiscalCode = @FiscalCode,
-                                    Birthday = @Birthday
-                                WHERE Id = @Id
+
+                                IF NOT EXISTS (SELECT ID FROM [dbo].[User] WHERE FiscalCode = @FiscalCode AND ID <> @Id)
+                                BEGIN
+                                    UPDATE [dbo].[User]
+                                    SET
+                                        Surname = @Surname,
+                                        Name = @Name,
+                                        FiscalCode = @FiscalCode,
+                                        Birthday = @Birthday
+                                    WHERE Id = @Id
+                                END
                     ";
                     connection.Open();
 

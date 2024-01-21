@@ -10,7 +10,7 @@ namespace DBService.Controller
     [Route("history")]
     public class HistoryController : ControllerBase
     {
-        [HttpGet, Route("{id}")]
+        [HttpGet, Route("{practiceId}")]
         public IActionResult Retrieve(long practiceId)
         {
             try

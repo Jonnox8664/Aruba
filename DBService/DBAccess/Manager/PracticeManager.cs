@@ -19,8 +19,6 @@ namespace DBAccess.Manager
                     return true;
                 if (practice.State < 0)
                     return true;
-                if (string.IsNullOrEmpty(practice.Attachment))
-                    return true;
                 return false;
             }
             catch (Exception)
@@ -88,6 +86,20 @@ namespace DBAccess.Manager
                 var um = new PracticeMapper();
                 var practice = um.Retrieve(id);
                 return (JObject)JToken.FromObject(practice);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        // Check and parse data for practice retrieve
+        public JObject RetrieveFullData(long practiceId)
+        {
+            try
+            {
+                var um = new PracticeMapper();
+                return um.RetrieveFullData(practiceId);
             }
             catch (Exception)
             {

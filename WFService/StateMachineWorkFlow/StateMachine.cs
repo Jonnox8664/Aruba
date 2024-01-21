@@ -2,7 +2,7 @@
 /*
  * Permitted actions
  * 
- *  Start       -> Create   -> New
+ *  Start       -> Create   -> New          (Started)
  *  New         -> Update   -> InProgress
  *  InProgress  -> Update   -> InProgress
  *  InProgress  -> Approve   -> Approved    (Closed)

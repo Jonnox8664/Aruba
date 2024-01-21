@@ -64,6 +64,26 @@ namespace DBService.Controller
             }
         }
 
+        // Recovers full data of a practice using the received practiceId
+        [HttpGet, Route("fulldata/{practiceId}")]
+        public IActionResult RetrieveFullData(long practiceId)
+        {
+            try
+            {
+                if (practiceId < 0)
+                    return StatusCode(400);
+
+                var um = new PracticeManager();
+                var res = um.RetrieveFullData(practiceId);
+
+                return StatusCode(200, res.ToString());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         // Receives data for practice update and updates using the received id
         [HttpPut, Route("{id}")]
         public IActionResult Update(long id, [FromBody] string raw)

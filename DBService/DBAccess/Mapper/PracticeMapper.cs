@@ -2,6 +2,7 @@
 
 using DBAccess.DataModel;
 using Microsoft.Data.SqlClient;
+using Newtonsoft.Json.Linq;
 using System.Data;
 
 namespace DBAccess.Mapper
@@ -44,6 +45,7 @@ namespace DBAccess.Mapper
                     connection.Close();
 
                     practice.Id = resultId;
+
                     var hm = new HistoryMapper();
                     hm.Create(practice);
                 }
@@ -82,10 +84,10 @@ namespace DBAccess.Mapper
                     {
                         var practice = new Practice()
                         {
-                            Id = (long) rdr["Id"],
-                            UserId = (long) rdr["UserId"],
-                            State = (int) rdr["State"],
-                            Attachment = (string) rdr["Attachment"]
+                            Id = (long)rdr["Id"],
+                            UserId = (long)rdr["UserId"],
+                            State = (int)rdr["State"],
+                            Attachment = (string)rdr["Attachment"]
                         };
                         PracticeList.Add(practice);
                     }
@@ -148,6 +150,75 @@ namespace DBAccess.Mapper
             }
         }
 
+        // Retrieve practice, user and history data from DB by practiceId
+        public JObject RetrieveFullData(long practiceId)
+        {
+            try
+            {
+                var fullData = new JObject();
+                PracticeFullData practice = new PracticeFullData();
+
+                using (connection)
+                {
+                    var query = @"
+                                    SELECT 
+	                                    P.Id AS PracticeId,
+	                                    P.State AS State,
+	                                    P.Attachment,
+	                                    U.Id AS UserId,
+	                                    U.Surname,
+	                                    U.Name,
+	                                    U.FiscalCode,
+	                                    U.Birthday
+                                    FROM [dbo].[Practice] AS P
+                                    INNER JOIN [dbo].[user] as U
+	                                    ON U.Id = P.UserId
+                                    WHERE P.Id = @Id
+                        ";
+                    connection.Open();
+
+                    SqlCommand cmd = new SqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@Id", SqlDbType.BigInt).Value = practiceId;
+                    var rdr = cmd.ExecuteReader();
+
+                    if (rdr.Read())
+                    {
+                        practice = new PracticeFullData()
+                        {
+                            PracticeId = (long)rdr["PracticeId"],
+                            State = (int)rdr["State"],
+                            Attachment = (string)rdr["Attachment"],
+                            UserId = (long)rdr["UserId"],
+                            Surname = (string)rdr["Surname"],
+                            Name = (string)rdr["Name"],
+                            FiscalCode = (string)rdr["FiscalCode"],
+                            Birthday = (DateTime)rdr["Birthday"]
+                        };
+                    }
+                    else
+                        practice = new PracticeFullData() { PracticeId = -1 };
+
+                    var practiceJObject = (JObject)JToken.FromObject(practice);
+
+                    var hm = new HistoryMapper();
+                    var historyJObject = JArray.FromObject(hm.Retrieve(practiceId));
+
+                    fullData = new JObject()
+                    {
+                        new JProperty("PracticeData", practiceJObject),
+                        new JProperty("History", historyJObject)
+                    };
+
+                    connection.Close();
+                }
+                return fullData;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         // Update practice data from DB by id
         public long Update(long id, Practice practice)
         {
@@ -174,6 +245,7 @@ namespace DBAccess.Mapper
                     connection.Close();
 
                     practice.Id = id;
+
                     var hm = new HistoryMapper();
                     hm.Create(practice);
                 }

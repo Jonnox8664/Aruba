@@ -76,9 +76,6 @@ namespace DBService.Controllers
                 var um = new UserManager();
                 var res = um.Update(id, raw);
 
-                if (res < 0)
-                    return StatusCode(400);
-
                 return StatusCode(200, res);
             }
             catch (Exception ex)
