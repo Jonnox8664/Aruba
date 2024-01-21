@@ -3,6 +3,7 @@
 using DBAccess.Manager;
 using DBAccess.Mapper;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace DBService.Controller
 {
@@ -95,6 +96,29 @@ namespace DBService.Controller
 
                 var um = new PracticeManager();
                 var res = um.Update(id, raw);
+
+                if (res < 0)
+                    return StatusCode(400);
+
+                return StatusCode(200, res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPut, Route("{id}/{state}")]
+        public IActionResult UpdateState(long id, int state)
+        {
+
+            try
+            {
+                if (id < 0 || state < 0 || state > 4)
+                    return StatusCode(400);
+
+                var um = new PracticeMapper();
+                var res = um.UpdateState(id, state);
 
                 if (res < 0)
                     return StatusCode(400);

@@ -257,6 +257,49 @@ namespace DBAccess.Mapper
             }
         }
 
+        // Update practice state from DB by id
+        public long UpdateState(long id, int state)
+        {
+            try
+            {
+                var affectedRows = 0;
+                using (connection)
+                {
+                    var query = @"
+                                UPDATE [dbo].[Practice]
+                                SET
+                                    State = @State
+                                WHERE Id = @Id
+                    ";
+                    connection.Open();
+
+                    SqlCommand cmd = new SqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@Id", SqlDbType.BigInt).Value = id;
+                    cmd.Parameters.AddWithValue("@State", SqlDbType.Int).Value = state;
+                    affectedRows = cmd.ExecuteNonQuery();
+
+                    connection.Close();
+
+                    if (affectedRows > 0)
+                    {
+                        Practice practice = new Practice()
+                        {
+                            Id = id,
+                            State = state
+                        };
+
+                        var hm = new HistoryMapper();
+                        hm.Create(practice);
+                    }
+                }
+                return (affectedRows <= 0) ? 0 : affectedRows;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         // Delete practice data from DB by id
         public int Delete(long id)
         {

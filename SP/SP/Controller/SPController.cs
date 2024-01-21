@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// SP Controller
+
+using Microsoft.AspNetCore.Mvc;
 
 namespace SP.Controller
 {
@@ -32,7 +34,7 @@ namespace SP.Controller
         {
             try
             {
-                if (file.Length > 0)
+                if (practiceId > 0 && file.Length > 0)
                 {
                     var bl = new BusinessLogic.BusinessLogic();
                     string? filePath = bl.API1UploadPracticeAttachment(practiceId, file.FileName);
@@ -41,7 +43,7 @@ namespace SP.Controller
                         using (Stream fileStream = new FileStream(filePath, FileMode.Create))
                         {
                             await file.CopyToAsync(fileStream);
-                            return StatusCode(200, "OK");
+                            return StatusCode(200, "File uploaded");
                         }
                 }
                 return StatusCode(400);
@@ -59,6 +61,9 @@ namespace SP.Controller
             try
             {
                 // Update the case data
+                if (practiceId <= 0)
+                    return StatusCode(400);
+
                 var bl = new BusinessLogic.BusinessLogic();
                 var result = bl.API2PracticeUpdate(practiceId, raw);
                 if (result.Result > 0)
@@ -79,6 +84,9 @@ namespace SP.Controller
             try
             {
                 // Retrieve practice data, its user and history
+                if(practiceId <= 0)
+                    return StatusCode(400);
+
                 var bl = new BusinessLogic.BusinessLogic();
                 var result = bl.API3RetrieveFullPracticeData(practiceId);
                 if (result != null)
@@ -117,5 +125,28 @@ namespace SP.Controller
                 return StatusCode(500, ex.Message);
             }
         }
+
+
+        // Support API 1
+        [HttpPut]
+        [Route("support1/{practiceId}/{act}")]
+        public IActionResult Support1UpdatePracticeState(long practiceId, int act)
+        {
+            try
+            {
+                if (practiceId > 0 && act >= 0 && act < 5)
+                {
+                    var bl = new BusinessLogic.BusinessLogic();
+                    long newState = bl.Support1UpdatePracticeState(practiceId, act).Result;
+                    return StatusCode(200, newState);
+                }
+                return StatusCode(400);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
     }
 }

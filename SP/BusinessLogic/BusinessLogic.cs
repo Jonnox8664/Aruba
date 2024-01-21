@@ -1,4 +1,4 @@
-﻿// Implementation of AP service logic
+﻿// Implementation of SP service logic
 
 using HTTPClient;
 using Newtonsoft.Json.Linq;
@@ -84,7 +84,7 @@ namespace BusinessLogic
         {
             try
             {
-                // Check i current practice stae is "New"
+                // Check if current practice stae is "New"
                 var url1 = @$"{_dbsBaseURI}practice/{practiceId}";
                 var practiceData = await BaseClient.JObjectHTTPGet(url1);
                 var state = RequestResponce.ResponceCheck(practiceData, "State");
@@ -150,6 +150,34 @@ namespace BusinessLogic
             {
                 throw;
             }
+        }
+
+        // Support 1
+        public async Task<long> Support1UpdatePracticeState(long practiceId, int action)
+        {
+
+            // Check if current practice stae is "New"
+            var url1 = @$"{_dbsBaseURI}practice/{practiceId}";
+            var practiceData = await BaseClient.JObjectHTTPGet(url1);
+            var currentState = RequestResponce.ResponceCheck(practiceData, "State");
+            if (currentState < 0 || currentState > 4)
+                return -8;
+
+            // It checks whether the action is valid for the current state
+            var url2 = @$"{_wfsBaseURI}state/{currentState}/action/{action}";
+            var stateCheckResult = await BaseClient.JObjectHTTPGet(url2);
+            var newState = RequestResponce.ResponceCheck(stateCheckResult, "CurrentStateCode");
+            if (newState < 0)
+                return -9;
+
+            // Updates the practice data
+            var url3 = @$"{_dbsBaseURI}practice/{practiceId}/{newState}";
+            var userCreationResult = await BaseClient.StringHTTPPut(url3, "");
+            var affectedRows = RequestResponce.ResponceCheck(userCreationResult);
+            if (affectedRows <= 0)
+                return affectedRows;
+
+            return newState;
         }
     }
 }

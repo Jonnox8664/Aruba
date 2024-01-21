@@ -36,7 +36,6 @@ namespace DBAccess.Mapper
                     SqlCommand cmd = new SqlCommand(query, connection);
                     cmd.Parameters.AddWithValue("@PracticeId", SqlDbType.BigInt).Value = practice.Id;
                     cmd.Parameters.AddWithValue("@State", SqlDbType.Int).Value = practice.State;
-                    cmd.Parameters.AddWithValue("@Attachment", SqlDbType.VarChar).Value = practice.Attachment;
                     var res = cmd.ExecuteScalar();
                     if (res != null)
                         resultId = (long)res;
