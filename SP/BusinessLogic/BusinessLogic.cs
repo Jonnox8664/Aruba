@@ -10,6 +10,7 @@ namespace BusinessLogic
         public const string basePracticeDirectory = @".\PracticeAttachments";
         private const string _wfsBaseURI = @"http://localhost:5075/";
         private const string _dbsBaseURI = @"http://localhost:5074/";
+        private const string _seBaseURI = @"http://localhost:5246/";
 
         // API1
         public async Task<long> API1PracticeCreation(string rawData)
@@ -19,9 +20,9 @@ namespace BusinessLogic
                 // It checks whether the action is valid for the current state
                 var url1 = @$"{_wfsBaseURI}state/0/action/0";
                 var stateCheckResult = await BaseClient.JObjectHTTPGet(url1);
-                var state = RequestResponce.ResponceCheck(stateCheckResult, "CurrentStateCode");
-                if (state <= 0)
-                    return state;
+                var currentStateCode = RequestResponce.ResponceCheck(stateCheckResult, "CurrentStateCode");
+                if (currentStateCode <= 0)
+                    return currentStateCode;
 
                 // It stores user data in the DB
                 var url2 = @$"{_dbsBaseURI}user";
@@ -176,6 +177,30 @@ namespace BusinessLogic
             var affectedRows = RequestResponce.ResponceCheck(userCreationResult);
             if (affectedRows <= 0)
                 return affectedRows;
+
+            string callbackMessage = "Error";
+            switch (newState)
+            {
+
+                case 0:
+                    callbackMessage = "Practice started";
+                    break;
+                case 1:
+                    callbackMessage = "Practice created";
+                    break;
+                case 2:
+                    callbackMessage = "Practice in progress";
+                    break;
+                case 3:
+                    callbackMessage = "Practice approved";
+                    break;
+                case 4:
+                    callbackMessage = "Practice refused";
+                    break;
+            }
+
+            var url4 = @$"{_seBaseURI}se/support2";
+            var x = await BaseClient.StringHTTPPost(url4, callbackMessage);
 
             return newState;
         }
