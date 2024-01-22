@@ -150,6 +150,43 @@ namespace DBAccess.Mapper
             }
         }
 
+        // Retrieve userId from DB by practiceId
+        public long RetrieveUserId(long practiceId)
+        {
+            try
+            {
+                long userId = -1;
+
+                using (connection)
+                {
+                    var query = @"
+                                SELECT u.Id AS PracticeId 
+                                FROM [dbo].[User] u
+                                INNER JOIN [dbo].[Practice] p
+	                                ON p.UserId=u.Id
+                                WHERE p.Id = @PracticeId
+                    ";
+                    connection.Open();
+
+                    SqlCommand cmd = new SqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@PracticeId", SqlDbType.VarChar).Value = practiceId;
+                    var rdr = cmd.ExecuteReader();
+
+                    if (rdr.Read())
+                    {
+                        userId = (long)rdr["PracticeId"];
+                    }
+
+                    connection.Close();
+                }
+                return userId;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         // Retrieve practice, user and history data from DB by practiceId
         public JObject RetrieveFullData(long practiceId)
         {
@@ -257,6 +294,36 @@ namespace DBAccess.Mapper
             }
         }
 
+        // Update practice attachment from DB by id
+        public long UpdateAttachment(long id, string attachment)
+        {
+            try
+            {
+                var affectedRows = 0;
+                using (connection)
+                {
+                    var query = @"
+                                UPDATE [dbo].[Practice]
+                                SET
+                                    Attachment = @Attachment
+                                WHERE Id = @Id
+                    ";
+                    connection.Open();
+
+                    SqlCommand cmd = new SqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@Id", SqlDbType.BigInt).Value = id;
+                    cmd.Parameters.AddWithValue("@Attachment", SqlDbType.VarChar).Value = attachment;
+                    affectedRows = cmd.ExecuteNonQuery();
+
+                    connection.Close();
+                }
+                return (affectedRows <= 0) ? 0 : affectedRows;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
         // Update practice state from DB by id
         public long UpdateState(long id, int state)
         {

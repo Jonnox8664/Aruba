@@ -2,11 +2,11 @@
 /*
  * Permitted actions
  * 
- *  Start       -> Create   -> New          (Started)
- *  New         -> Update   -> InProgress
- *  InProgress  -> Update   -> InProgress
- *  InProgress  -> Approve   -> Approved    (Closed)
- *  InProgress  -> Refuse   -> Refused      (Closed)
+ *  Start       ->      Create      ->      Created      (Started)
+ *  Created     ->      Update      ->      Created
+ *  Created     ->      Approve     ->      Approved     (Closed)
+ *  Created     ->      Refuse      ->      Refused      (Closed)
+ *  
 */
 
 namespace StateMachineWorkFlow
@@ -17,10 +17,9 @@ namespace StateMachineWorkFlow
         public enum State
         {
             Start = 0,
-            New = 1,
-            InProgress = 2,
-            Approved = 3,
-            Refused = 4,
+            Created = 1,
+            Approved = 2,
+            Refused = 3,
             Error = -1
         }
 
@@ -49,11 +48,10 @@ namespace StateMachineWorkFlow
             {
                 _state = (_state, action) switch
                 {
-                    (State.Start, Action.Create) => State.New,
-                    (State.New, Action.Update) => State.InProgress,
-                    (State.InProgress, Action.Update) => State.InProgress,
-                    (State.InProgress, Action.Approve) => State.Approved,
-                    (State.InProgress, Action.Refuse) => State.Refused,
+                    (State.Start, Action.Create) => State.Created,
+                    (State.Created, Action.Update) => State.Created,
+                    (State.Created, Action.Approve) => State.Approved,
+                    (State.Created, Action.Refuse) => State.Refused,
                     _ => State.Error
                 };
 

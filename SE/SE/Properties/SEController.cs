@@ -6,7 +6,7 @@ namespace SE.Properties
 {
     [ApiController]
     [Route("se")]
-    public class SRController : ControllerBase
+    public class SEController : ControllerBase
     {
         // Support API 2
         [HttpPost, Route("support2")]

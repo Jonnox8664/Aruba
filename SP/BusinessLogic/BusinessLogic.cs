@@ -2,6 +2,7 @@
 
 using HTTPClient;
 using Newtonsoft.Json.Linq;
+using System.Net.Mail;
 
 namespace BusinessLogic
 {
@@ -13,16 +14,16 @@ namespace BusinessLogic
         private const string _seBaseURI = @"http://localhost:5246/";
 
         // API1
-        public async Task<long> API1PracticeCreation(string rawData)
+        public async Task<long> API1PracticeCreation(string rawData, string filename)
         {
             try
             {
                 // It checks whether the action is valid for the current state
                 var url1 = @$"{_wfsBaseURI}state/0/action/0";
                 var stateCheckResult = await BaseClient.JObjectHTTPGet(url1);
-                var currentStateCode = RequestResponce.ResponceCheck(stateCheckResult, "CurrentStateCode");
-                if (currentStateCode <= 0)
-                    return currentStateCode;
+                var newState = RequestResponce.ResponceCheck(stateCheckResult, "CurrentStateCode");
+                if (newState <= 0)
+                    return newState;
 
                 // It stores user data in the DB
                 var url2 = @$"{_dbsBaseURI}user";
@@ -33,7 +34,7 @@ namespace BusinessLogic
 
                 // It stores practice data in the DB
                 var url3 = @$"{_dbsBaseURI}practice";
-                var rawPracticeData = $"{{UserId: {userId}, Attachment: ''}}";
+                var rawPracticeData = $"{{UserId: {userId}, State : {newState}, Attachment: '{filename}'}}";
                 var practiceCreationResult = await BaseClient.StringHTTPPost(url3, rawPracticeData);
                 var practiceId = RequestResponce.ResponceCheck(practiceCreationResult);
                 if (practiceId <= 0)
@@ -42,6 +43,8 @@ namespace BusinessLogic
                     await BaseClient.StringHTTDelete(@$"{_dbsBaseURI}user/{userId}");
                     return -5;
                 }
+
+                await _historyUpdate(practiceId, newState, true);
 
                 return practiceId;
             }
@@ -57,7 +60,7 @@ namespace BusinessLogic
             try
             {
                 // Store the practice attachment on the filesystem
-                if (string.IsNullOrEmpty(filename))
+                if (!string.IsNullOrEmpty(filename))
                 {
                     string practiceDirectory = @$"{basePracticeDirectory}\{practiceId}";
                     bool exists = System.IO.Directory.Exists(practiceDirectory);
@@ -80,20 +83,58 @@ namespace BusinessLogic
             }
         }
 
+        // API {id}/attachment
+        public async Task<long> API1UpdatePracticeAttachmentName1(long practiceId)
+        {
+            // Check if current practice stae is "New"
+            var url1 = @$"{_dbsBaseURI}practice/{practiceId}/";
+            var practiceData = await BaseClient.JObjectHTTPGet(url1);
+            var realId = RequestResponce.ResponceCheck(practiceData, "Id");
+            if (realId < 0)
+                return -10;
+            return realId;
+        }
+        // API {id}/attachment
+        public async Task<long> API1UpdatePracticeAttachmentName2(long practiceId, string filename)
+        {
+            // Updates the practice data
+            var url1 = @$"{_dbsBaseURI}practice/{practiceId}/attachment";
+            var userCreationResult = await BaseClient.StringHTTPPut(url1, filename);
+            var affectedRows = RequestResponce.ResponceCheck(userCreationResult);
+            return affectedRows;
+        }
+
+
         // API2
-        public async Task<long> API2PracticeUpdate(long practiceId, string rawData)
+        public async Task<long> API2PracticeUpdate1(long practiceId)
+        {
+            try
+            {
+                // Get userId from practiceId
+                var url1 = @$"{_dbsBaseURI}practice/getuser/{practiceId}";
+                var userId = await BaseClient.StringHTTPGet(url1);
+                return RequestResponce.ResponceCheck(userId);
+            }
+            catch (HttpRequestException)
+            {
+                throw;
+            }
+        }
+
+        // API2
+        public async Task<long> API2PracticeUpdate2(long userId, string rawData)
         {
             try
             {
                 // Check if current practice stae is "New"
-                var url1 = @$"{_dbsBaseURI}practice/{practiceId}";
+                var url1 = @$"{_dbsBaseURI}practice/{userId}";
                 var practiceData = await BaseClient.JObjectHTTPGet(url1);
                 var state = RequestResponce.ResponceCheck(practiceData, "State");
                 if (state > 1)
                     return -7;
 
                 // Updates the practice data
-                var url2 = @$"{_dbsBaseURI}user/{practiceId}";
+                var url2 = @$"{_dbsBaseURI}user/{userId}";
                 var userCreationResult = await BaseClient.StringHTTPPut(url2, rawData);
                 var affectedRows = RequestResponce.ResponceCheck(userCreationResult);
                 if (affectedRows <= 0)
@@ -156,12 +197,11 @@ namespace BusinessLogic
         // Support 1
         public async Task<long> Support1UpdatePracticeState(long practiceId, int action)
         {
-
             // Check if current practice stae is "New"
             var url1 = @$"{_dbsBaseURI}practice/{practiceId}";
             var practiceData = await BaseClient.JObjectHTTPGet(url1);
             var currentState = RequestResponce.ResponceCheck(practiceData, "State");
-            if (currentState < 0 || currentState > 4)
+            if (currentState < 0 || currentState > 3)
                 return -8;
 
             // It checks whether the action is valid for the current state
@@ -178,31 +218,39 @@ namespace BusinessLogic
             if (affectedRows <= 0)
                 return affectedRows;
 
-            string callbackMessage = "Error";
+            await _historyUpdate(practiceId, newState, false);
+
+            return newState;
+        }
+
+        private async Task _historyUpdate(long practiceId, long newState, bool newFlow)
+        {
+
+            string stateString = "Error";
             switch (newState)
             {
 
                 case 0:
-                    callbackMessage = "Practice started";
+                    stateString = "Practice started";
                     break;
                 case 1:
-                    callbackMessage = "Practice created";
+                    if(newFlow)
+                        stateString = "Practice created";
+                    else
+                        stateString = "Practice updated";
                     break;
                 case 2:
-                    callbackMessage = "Practice in progress";
+                    stateString = "Practice approved";
                     break;
                 case 3:
-                    callbackMessage = "Practice approved";
-                    break;
-                case 4:
-                    callbackMessage = "Practice refused";
+                    stateString = "Practice refused";
                     break;
             }
 
-            var url4 = @$"{_seBaseURI}se/support2";
-            var x = await BaseClient.StringHTTPPost(url4, callbackMessage);
+            string callbackMessage = $"PracticeId: {practiceId} - State: {stateString} - Timestamp: {DateTime.Now}";
 
-            return newState;
+            var url4 = @$"{_seBaseURI}se/support2";
+            await BaseClient.StringHTTPPost(url4, callbackMessage);
         }
     }
 }

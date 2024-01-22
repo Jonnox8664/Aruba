@@ -64,7 +64,7 @@ namespace DBService.Controllers
             }
         }
 
-        // Receives data for user update and updates using the received id
+        // Receives data for user update and updates it using the received id
         [HttpPut, Route("{id}")]
         public IActionResult Update(long id, [FromBody] string raw)
         {

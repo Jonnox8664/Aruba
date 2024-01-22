@@ -3,7 +3,6 @@
 using DBAccess.Manager;
 using DBAccess.Mapper;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 
 namespace DBService.Controller
 {
@@ -65,6 +64,26 @@ namespace DBService.Controller
             }
         }
 
+        // Recovers userId of a practice using the received practiceid
+        [HttpGet, Route("getuser/{practiceId}")]
+        public IActionResult RetrieveUserId(long practiceId)
+        {
+            try
+            {
+                if (practiceId < 0)
+                    return StatusCode(400);
+
+                var um = new PracticeManager();
+                var res = um.RetrieveUserId(practiceId);
+
+                return StatusCode(200, res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         // Recovers full data of a practice using the received practiceId
         [HttpGet, Route("fulldata/{practiceId}")]
         public IActionResult RetrieveFullData(long practiceId)
@@ -85,7 +104,7 @@ namespace DBService.Controller
             }
         }
 
-        // Receives data for practice update and updates using the received id
+        // Receives data for practice update and updates it using the received id
         [HttpPut, Route("{id}")]
         public IActionResult Update(long id, [FromBody] string raw)
         {
@@ -108,6 +127,30 @@ namespace DBService.Controller
             }
         }
 
+        // Receives data for practice attachment update and updates it using the received id
+        [HttpPut, Route("{id}/attachment")]
+        public IActionResult UpdateAttachment(long id, [FromBody] string raw)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(raw))
+                    return StatusCode(400);
+
+                var um = new PracticeMapper();
+                var res = um.UpdateAttachment(id, raw);
+
+                if (res < 0)
+                    return StatusCode(400);
+
+                return StatusCode(200, res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        // Receives data for practice state update and updates it using the received id
         [HttpPut, Route("{id}/{state}")]
         public IActionResult UpdateState(long id, int state)
         {

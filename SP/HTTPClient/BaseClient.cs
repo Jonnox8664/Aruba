@@ -58,15 +58,23 @@ namespace HTTPClient
 
     public class BaseClient
     {
+        private static string _cleanQuotes(string str)
+        {
+            if (str.Length > 1 && str[0] == '"' && str[str.Length - 1] == '"')
+                str = str.Substring(1, str.Length - 2);
+
+            return $"\"{str}\"";
+        }
+
         // Generate a POST request
         public static async Task<RequestResponce> StringHTTPPost(string uri, string rawData)
         {
             try
             {
                 HttpClient client = new HttpClient();
-                //client.BaseAddress = new Uri("https://www.testapi.com");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                using (var response = await client.PostAsync(uri, new StringContent($"\"{rawData}\"", Encoding.UTF8, "application/json")))
+                rawData = BaseClient._cleanQuotes(rawData);
+                using (var response = await client.PostAsync(uri, new StringContent(rawData, Encoding.UTF8, "application/json")))
                 {
                     using (var content = response.Content)
                     {
@@ -138,9 +146,9 @@ namespace HTTPClient
             try
             {
                 HttpClient client = new HttpClient();
-                //client.BaseAddress = new Uri("https://www.testapi.com");
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                using (var response = await client.PutAsync(uri, new StringContent($"\"{rawData}\"", Encoding.UTF8, "application/json")))
+                rawData = BaseClient._cleanQuotes(rawData);
+                using (var response = await client.PutAsync(uri, new StringContent(rawData, Encoding.UTF8, "application/json")))
                 {
                     using (var content = response.Content)
                     {

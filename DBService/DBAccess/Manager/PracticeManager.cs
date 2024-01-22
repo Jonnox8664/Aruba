@@ -94,6 +94,21 @@ namespace DBAccess.Manager
         }
 
         // Check and parse data for practice retrieve
+        public long RetrieveUserId(long practiceId)
+        {
+            try
+            {
+                var um = new PracticeMapper();
+                return um.RetrieveUserId(practiceId);
+                
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        // Check and parse data for practice retrieve
         public JObject RetrieveFullData(long practiceId)
         {
             try
