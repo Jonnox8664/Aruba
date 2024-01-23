@@ -240,9 +240,12 @@ namespace BusinessLogic
                         stateString = "Practice updated";
                     break;
                 case 2:
-                    stateString = "Practice approved";
+                    stateString = "Practice in progress";
                     break;
                 case 3:
+                    stateString = "Practice approved";
+                    break;
+                case 4:
                     stateString = "Practice refused";
                     break;
             }

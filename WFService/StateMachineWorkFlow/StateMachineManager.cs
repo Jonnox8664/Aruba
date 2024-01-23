@@ -5,6 +5,11 @@ using static StateMachineWorkFlow.StateMachine;
 
 namespace StateMachineWorkFlow
 {
+    public interface IStateMachineManager<StateMachineManager>
+    {
+        public JObject StateMachineHandler(int currentState, int action);
+    }
+
     public class StateMachineManager
     {
         // Check and return data for next state machine allowed state

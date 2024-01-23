@@ -2,24 +2,26 @@
 /*
  * Permitted actions
  * 
- *  Start       ->      Create      ->      Created      (Started)
- *  Created     ->      Update      ->      Created
- *  Created     ->      Approve     ->      Approved     (Closed)
- *  Created     ->      Refuse      ->      Refused      (Closed)
+ *  Start           ->      Create      ->      Created      (Started)
+ *  Created         ->      Update      ->      Created
+ *  Created         ->      Handle      ->      InProgress
+ *  InProgress      ->      Approve     ->      Approved     (Closed)
+ *  InProgress      ->      Refuse      ->      Refused      (Closed)
  *  
 */
 
 namespace StateMachineWorkFlow
 {
-    public class StateMachine
+    public class StateMachine : IStateMachine
     {
         // Work flow states
         public enum State
         {
             Start = 0,
             Created = 1,
-            Approved = 2,
-            Refused = 3,
+            InProgress = 2,
+            Approved = 3,
+            Refused = 4,
             Error = -1
         }
 
@@ -28,8 +30,9 @@ namespace StateMachineWorkFlow
         {
             Create = 0,
             Update = 1,
-            Approve = 2,
-            Refuse = 3,
+            Handle = 2,
+            Approve = 3,
+            Refuse = 4,
         }
 
         // Current state
@@ -50,8 +53,9 @@ namespace StateMachineWorkFlow
                 {
                     (State.Start, Action.Create) => State.Created,
                     (State.Created, Action.Update) => State.Created,
-                    (State.Created, Action.Approve) => State.Approved,
-                    (State.Created, Action.Refuse) => State.Refused,
+                    (State.Created, Action.Handle) => State.InProgress,
+                    (State.InProgress, Action.Approve) => State.Approved,
+                    (State.InProgress, Action.Refuse) => State.Refused,
                     _ => State.Error
                 };
 
